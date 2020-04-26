@@ -1,22 +1,28 @@
 use std::collections::BTreeSet;
 
-#[derive(PartialOrd, Ord, PartialEq, Eq)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 pub struct Application<A: PartialOrd + Ord + PartialEq + Eq> {
   pub name: A,
 }
 
+#[derive(Debug)]
 pub enum Matching<M> {
   Unmatched,
   Remain(Modifiers<M>),
 }
 
-#[derive(Clone)]
-pub struct KeyInput<K: PartialEq + Eq + Clone, M: PartialOrd + Ord + Clone> {
+#[derive(Clone, Debug)]
+pub struct KeyInput<
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
+> {
   key: Key<K>,
   modifiers: Modifiers<M>,
 }
 
-impl<K: PartialEq + Eq + Clone, M: PartialOrd + Ord + Clone> KeyInput<K, M> {
+impl<K: PartialEq + Eq + std::fmt::Debug + Clone, M: PartialOrd + Ord + std::fmt::Debug + Clone>
+  KeyInput<K, M>
+{
   pub fn new(key: Key<K>, modifiers: Modifiers<M>) -> Self {
     Self {
       key: key,
@@ -54,7 +60,7 @@ impl<K: PartialEq + Eq + Clone, M: PartialOrd + Ord + Clone> KeyInput<K, M> {
   }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Key<K: PartialEq + Eq + Clone> {
   value: K,
 }
@@ -73,7 +79,7 @@ enum ModifiersSub<M> {
   SubResult(Modifiers<M>),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Modifiers<M> {
   value: BTreeSet<Modifier<M>>,
 }
@@ -115,7 +121,7 @@ impl<M: PartialOrd + Ord + Clone> Modifiers<M> {
   }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct Modifier<M> {
   value: M,
 }

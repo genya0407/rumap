@@ -1,0 +1,25 @@
+{
+  "remaps": [
+    {
+      "from": "Control-h",
+      "to": "Left"
+    },
+    {
+      "from": "Control-j",
+      "to": "Down"
+    },
+    {
+      "from": "Control-k",
+      "to": "Up"
+    },
+    {
+      "from": "Control-l",
+      "to": "Right"
+    },
+    {
+      "from": "Mod1-s",
+      "to": "Control-s"
+    }
+  ],
+  "remaps_for_application": {}
+}
