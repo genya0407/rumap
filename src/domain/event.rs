@@ -1,46 +1,50 @@
 use super::values::*;
 
 pub enum Event<
-  K: PartialEq + Eq + Clone,
-  M: PartialOrd + Ord + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
   APP: PartialEq + Eq + PartialOrd + Ord + Clone,
 > {
   KeyPressed(KeyInput<K, M>),
+  KeyReleased(KeyInput<K, M>),
   ApplicationChange(Application<APP>),
 }
 
 pub trait EventSource<
-  K: PartialEq + Eq + Clone,
-  M: PartialOrd + Ord + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
   APP: PartialEq + Eq + PartialOrd + Ord + Clone,
 >
 {
-  fn register_keys(&self) -> Result<(), Box<dyn std::error::Error>> {
+  fn remap_keys(&self) -> Result<(), Box<dyn std::error::Error>> {
+    self.initialize_register_state()?;
     for key_input in self.watch_target_key_inputs() {
       self.register_key(key_input)?;
     }
     Ok(())
   }
+  fn initialize_register_state(&self) -> Result<(), Box<dyn std::error::Error>>;
   fn register_key(&self, key_input: KeyInput<K, M>) -> Result<(), Box<dyn std::error::Error>>;
   fn next(&self) -> Option<Event<K, M, APP>>;
   fn watch_target_key_inputs(&self) -> Vec<KeyInput<K, M>>;
 }
 
 pub trait EventHandler<
-  K: PartialEq + Eq + Clone,
-  M: PartialOrd + Ord + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
   APP: PartialEq + Eq + PartialOrd + Ord + Clone,
 >
 {
   fn key_press(&self, key_input: KeyInput<K, M>);
+  fn key_release(&self, key_input: KeyInput<K, M>);
   fn change_application(&mut self, application: Application<APP>);
 }
 
 pub struct EventWatcher<
   ES: EventSource<K, M, APP>,
   EH: EventHandler<K, M, APP>,
-  K: PartialEq + Eq + Clone,
-  M: PartialOrd + Ord + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
   APP: PartialEq + Eq + PartialOrd + Ord + Clone,
 > {
   event_source: ES,
@@ -53,8 +57,8 @@ pub struct EventWatcher<
 impl<
     ES: EventSource<K, M, APP>,
     EH: EventHandler<K, M, APP>,
-    K: PartialEq + Eq + Clone,
-    M: PartialOrd + Ord + Clone,
+    K: PartialEq + Eq + std::fmt::Debug + Clone,
+    M: PartialOrd + Ord + std::fmt::Debug + Clone,
     APP: PartialEq + Eq + PartialOrd + Ord + Clone,
   > EventWatcher<ES, EH, K, M, APP>
 {
@@ -69,11 +73,12 @@ impl<
   }
 
   pub fn watch(&mut self) {
-    self.event_source.register_keys().unwrap();
+    self.event_source.remap_keys().unwrap();
 
     while let Some(event) = self.event_source.next() {
       match event {
         Event::KeyPressed(key_input) => self.event_handler.key_press(key_input),
+        Event::KeyReleased(key_input) => self.event_handler.key_release(key_input),
         Event::ApplicationChange(application) => self.event_handler.change_application(application),
       }
     }

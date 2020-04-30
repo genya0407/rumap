@@ -3,7 +3,10 @@ use super::values::*;
 use std::collections::BTreeMap;
 
 #[derive(Clone)]
-pub struct Remap<K: PartialEq + Eq + Clone, M: PartialOrd + Ord + Clone> {
+pub struct Remap<
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
+> {
   pub from: KeyInput<K, M>,
   pub to: KeyInput<K, M>,
 }
@@ -13,20 +16,29 @@ pub trait Action {
 }
 
 #[derive(Clone)]
-pub struct ExecAction<A: Action + Clone, K: PartialEq + Eq + Clone, M: PartialOrd + Ord + Clone> {
+pub struct ExecAction<
+  A: Action + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
+> {
   pub from: KeyInput<K, M>,
   pub action: Box<A>,
 }
 
-pub trait KeyPresser<K: PartialEq + Eq + Clone, M: PartialOrd + Ord + Clone> {
+pub trait KeyPresser<
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
+>
+{
   fn press(&self, key_input: KeyInput<K, M>);
+  fn release(&self, key_input: KeyInput<K, M>);
 }
 
 pub struct Interpreter<
   KP: KeyPresser<K, M>,
   A: Action + Clone,
-  K: PartialEq + Eq + Clone,
-  M: PartialOrd + Ord + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
   APP: PartialEq + Eq + PartialOrd + Ord + Clone,
 > {
   pub current_application: Application<APP>,
@@ -40,12 +52,16 @@ pub struct Interpreter<
 impl<
     KP: KeyPresser<K, M>,
     A: Action + Clone,
-    K: PartialEq + Eq + Clone,
-    M: PartialOrd + Ord + Clone,
-    APP: PartialEq + Eq + PartialOrd + Ord + Clone,
+    K: PartialEq + Eq + std::fmt::Debug + Clone,
+    M: PartialOrd + Ord + std::fmt::Debug + Clone,
+    APP: PartialEq + Eq + PartialOrd + Ord + Clone + std::fmt::Debug,
   > EventHandler<K, M, APP> for Interpreter<KP, A, K, M, APP>
 {
   fn change_application(&mut self, application: Application<APP>) {
+    println!(
+      "before: {:?}, next: {:?}",
+      self.current_application.name, application.name
+    );
     self.current_application = application;
   }
 
@@ -55,6 +71,7 @@ impl<
         Matching::Unmatched => {}
         Matching::Remain(modifiers) => {
           let remapped_key_input = remap.to.merge_modifiers(&modifiers);
+          println!("{:?}", remapped_key_input);
           self.key_presser.press(remapped_key_input);
           return;
         }
@@ -76,13 +93,42 @@ impl<
 
     self.key_presser.press(key_input)
   }
+
+  fn key_release(&self, key_input: KeyInput<K, M>) {
+    for remap in self.current_remaps() {
+      match remap.from.match_to(&key_input) {
+        Matching::Unmatched => {}
+        Matching::Remain(modifiers) => {
+          let remapped_key_input = remap.to.merge_modifiers(&modifiers);
+          println!("{:?}", remapped_key_input);
+          self.key_presser.release(remapped_key_input);
+          return;
+        }
+      }
+    }
+
+    for exec_action in self.current_exec_actions() {
+      match exec_action.from.match_to(&key_input) {
+        Matching::Unmatched => {}
+        Matching::Remain(modifiers) => {
+          if modifiers.is_empty() {
+            // actionの場合はreleaseを発行する必要がないのでなにもせずに終了する
+            // ここでreturnしないとreleaseが発行されてしまうのでreturnする
+            return;
+          }
+        }
+      }
+    }
+
+    self.key_presser.release(key_input)
+  }
 }
 
 impl<
     KP: KeyPresser<K, M>,
     A: Action + Clone,
-    K: PartialEq + Eq + Clone,
-    M: PartialOrd + Ord + Clone,
+    K: PartialEq + Eq + std::fmt::Debug + Clone,
+    M: PartialOrd + Ord + std::fmt::Debug + Clone,
     APP: PartialEq + Eq + PartialOrd + Ord + Clone,
   > Interpreter<KP, A, K, M, APP>
 {
