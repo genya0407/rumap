@@ -45,7 +45,7 @@ impl XState {
       // This prevents SEGV in such a situation.
       // if xlib::XGetTextProperty(self.display, self.window, &mut x_text_property, class_atom) == 0 {
       //   return domain::Application {
-      //     name: String::from(""),
+      //     kind: String::from(""),
       //   };
       // }
 
@@ -87,7 +87,7 @@ impl XState {
         } else {
           // root windowのparentは0になる。0にたいしてXGetTextProperyをすると死ぬのでここでデフォルト値を返す。
           return domain::Application {
-            name: String::from(""),
+            kind: String::from(""),
           };
         }
       }
@@ -95,7 +95,7 @@ impl XState {
       if x_text_property.nitems > 0 && !x_text_property.value.is_null() {
         if x_text_property.encoding == xlib::XA_STRING {
           domain::Application {
-            name: CString::from_raw(x_text_property.value as *mut i8)
+            kind: CString::from_raw(x_text_property.value as *mut i8)
               .into_string()
               .unwrap(),
           }
@@ -114,11 +114,11 @@ impl XState {
             String::from("")
           };
           xlib::XFreeStringList(char_list);
-          domain::Application { name: name }
+          domain::Application { kind: name }
         }
       } else {
         domain::Application {
-          name: String::from(""),
+          kind: String::from(""),
         }
       }
     }

@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (config_application, config_remaps) in config.remaps_for_application.clone().into_iter()
         {
             let application = domain::Application {
-                name: config_application.0,
+                kind: config_application.0,
             };
             let mut domain_remaps = vec![];
             for config_remap in config_remaps.iter() {
@@ -91,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (config_application, config_remaps) in config.remaps_for_application.clone().into_iter()
         {
             let application = domain::Application {
-                name: config_application.0,
+                kind: config_application.0,
             };
             let mut domain_remaps = vec![];
             for config_remap in config_remaps.iter() {

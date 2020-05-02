@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 pub struct Application<A: PartialOrd + Ord + PartialEq + Eq> {
-  pub name: A,
+  pub kind: A,
 }
 
 #[derive(Debug)]
@@ -278,7 +278,7 @@ impl<
   fn change_application(&mut self, application: Application<APP>) {
     println!(
       "before: {:?}, next: {:?}",
-      self.current_application.name, application.name
+      self.current_application.kind, application.kind
     );
     self.current_application = application;
   }
