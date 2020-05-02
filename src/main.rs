@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .clone()
             .into_iter()
             .filter_map(|remap| match remap.to {
-                config::Action::Key(key_input) => Some(domain::interpreter::Remap {
+                config::Action::Key(key_input) => Some(domain::Remap {
                     from: x::parse_key_input(remap.from).unwrap(), // TODO unwrap
                     to: x::parse_key_input(key_input).unwrap(),    // TODO unwrap
                 }),
@@ -46,23 +46,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .collect();
 
         let mut remaps_for_application: BTreeMap<
-            domain::values::Application<x::XAppIdentifier>,
-            Vec<domain::interpreter::Remap<x::XKeySymbol, x::XModifier>>,
+            domain::Application<x::XAppIdentifier>,
+            Vec<domain::Remap<x::XKeySymbol, x::XModifier>>,
         > = BTreeMap::new();
         for (config_application, config_remaps) in config.remaps_for_application.clone().into_iter()
         {
-            let application = domain::values::Application {
+            let application = domain::Application {
                 name: config_application.0,
             };
             let mut domain_remaps = vec![];
             for config_remap in config_remaps.iter() {
                 match config_remap.to.clone() {
-                    config::Action::Key(key_input) => {
-                        domain_remaps.push(domain::interpreter::Remap {
-                            from: x::parse_key_input(config_remap.from.clone())?,
-                            to: x::parse_key_input(key_input.clone())?,
-                        })
-                    }
+                    config::Action::Key(key_input) => domain_remaps.push(domain::Remap {
+                        from: x::parse_key_input(config_remap.from.clone())?,
+                        to: x::parse_key_input(key_input.clone())?,
+                    }),
                     _ => {}
                 }
             }
@@ -77,7 +75,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .into_iter()
             .filter_map(|remap| match remap.to {
                 config::Action::Command { execute: command } => {
-                    Some(domain::interpreter::ExecAction {
+                    Some(domain::ExecAction {
                         from: x::parse_key_input(remap.from).unwrap(), // TODO unwrap
                         action: Box::new(x::XAction::Command(command)),
                     })
@@ -87,19 +85,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .collect();
 
         let mut exec_actions_for_application: BTreeMap<
-            domain::values::Application<x::XAppIdentifier>,
-            Vec<domain::interpreter::ExecAction<x::XAction, x::XKeySymbol, x::XModifier>>,
+            domain::Application<x::XAppIdentifier>,
+            Vec<domain::ExecAction<x::XAction, x::XKeySymbol, x::XModifier>>,
         > = BTreeMap::new();
         for (config_application, config_remaps) in config.remaps_for_application.clone().into_iter()
         {
-            let application = domain::values::Application {
+            let application = domain::Application {
                 name: config_application.0,
             };
             let mut domain_remaps = vec![];
             for config_remap in config_remaps.iter() {
                 match config_remap.to.clone() {
                     config::Action::Command { execute: command } => {
-                        domain_remaps.push(domain::interpreter::ExecAction {
+                        domain_remaps.push(domain::ExecAction {
                             from: x::parse_key_input(config_remap.from.clone())?,
                             action: Box::new(x::XAction::Command(command)),
                         })
@@ -112,13 +110,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        let interpreter: domain::interpreter::Interpreter<
+        let interpreter: domain::EventHandler<
             XKeyPresser,
             XAction,
             XKeySymbol,
             XModifier,
             XAppIdentifier,
-        > = domain::interpreter::Interpreter {
+        > = domain::EventHandler {
             current_application: current_application,
             global_remaps: global_remaps,
             global_exec_actions: global_exec_actions,
@@ -126,19 +124,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             exec_actions_for_application: exec_actions_for_application,
             key_presser: key_presser,
         };
-        let mut event_watcher: domain::event::EventWatcher<
+        let mut event_watcher: domain::EventWatcher<
             XEventSource,
-            domain::interpreter::Interpreter<
-                XKeyPresser,
-                XAction,
-                XKeySymbol,
-                XModifier,
-                XAppIdentifier,
-            >,
+            domain::EventHandler<XKeyPresser, XAction, XKeySymbol, XModifier, XAppIdentifier>,
             XKeySymbol,
             XModifier,
             XAppIdentifier,
-        > = domain::event::EventWatcher::new(event_source, interpreter);
+        > = domain::EventWatcher::new(event_source, interpreter);
         event_watcher.watch();
         Ok(())
     }

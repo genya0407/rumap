@@ -16,7 +16,7 @@ pub enum XAction {
   Command(String),
 }
 
-impl domain::interpreter::Action for XAction {
+impl domain::Action for XAction {
   fn call(&self) {}
 }
 
@@ -26,7 +26,7 @@ pub struct XState {
 }
 
 impl XState {
-  pub fn fetch_current_application(&self) -> domain::values::Application<XAppIdentifier> {
+  pub fn fetch_current_application(&self) -> domain::Application<XAppIdentifier> {
     unsafe {
       let class_atom = xlib::XInternAtom(
         self.display,
@@ -44,7 +44,7 @@ impl XState {
       // XGetTextProperty can return 0 when xmonad's workspace is selected, while it usually returns 1.
       // This prevents SEGV in such a situation.
       // if xlib::XGetTextProperty(self.display, self.window, &mut x_text_property, class_atom) == 0 {
-      //   return domain::values::Application {
+      //   return domain::Application {
       //     name: String::from(""),
       //   };
       // }
@@ -86,7 +86,7 @@ impl XState {
           target_window = parent;
         } else {
           // root windowのparentは0になる。0にたいしてXGetTextProperyをすると死ぬのでここでデフォルト値を返す。
-          return domain::values::Application {
+          return domain::Application {
             name: String::from(""),
           };
         }
@@ -94,7 +94,7 @@ impl XState {
 
       if x_text_property.nitems > 0 && !x_text_property.value.is_null() {
         if x_text_property.encoding == xlib::XA_STRING {
-          domain::values::Application {
+          domain::Application {
             name: CString::from_raw(x_text_property.value as *mut i8)
               .into_string()
               .unwrap(),
@@ -114,10 +114,10 @@ impl XState {
             String::from("")
           };
           xlib::XFreeStringList(char_list);
-          domain::values::Application { name: name }
+          domain::Application { name: name }
         }
       } else {
-        domain::values::Application {
+        domain::Application {
           name: String::from(""),
         }
       }
@@ -128,7 +128,7 @@ impl XState {
 // Ctrl-Shift-j みたいな文字列をパースする
 pub fn parse_key_input(
   key_input: crate::config::KeyInput,
-) -> Result<domain::values::KeyInput<XKeySymbol, XModifier>, Box<dyn std::error::Error>> {
+) -> Result<domain::KeyInput<XKeySymbol, XModifier>, Box<dyn std::error::Error>> {
   let key_input = key_input.0;
   let mut key_names = key_input.split('-').collect::<Vec<&str>>();
   if key_names.len() == 0 {
@@ -156,12 +156,12 @@ pub fn parse_key_input(
         ))?,
     );
   }
-  Ok(domain::values::KeyInput::new(
-    domain::values::Key::new(keysym),
-    domain::values::Modifiers::new(
+  Ok(domain::KeyInput::new(
+    domain::Key::new(keysym),
+    domain::Modifiers::new(
       modifier_masks
         .into_iter()
-        .map(|mask| domain::values::Modifier::new(mask))
+        .map(|mask| domain::Modifier::new(mask))
         .collect(),
     ),
   ))
@@ -169,7 +169,7 @@ pub fn parse_key_input(
 
 pub struct XEventSource {
   state: Rc<Mutex<XState>>,
-  watch_target_key_inputs: Vec<domain::values::KeyInput<XKeySymbol, XModifier>>,
+  watch_target_key_inputs: Vec<domain::KeyInput<XKeySymbol, XModifier>>,
 }
 
 impl XEventSource {
@@ -189,7 +189,7 @@ impl XEventSource {
     ]
     .concat();
 
-    let mut watch_target_key_inputs: Vec<domain::values::KeyInput<XKeySymbol, XModifier>> = vec![];
+    let mut watch_target_key_inputs: Vec<domain::KeyInput<XKeySymbol, XModifier>> = vec![];
     for remap in remaps {
       use itertools::Itertools;
 
@@ -197,9 +197,7 @@ impl XEventSource {
       let modifiers = from.modifiers().to_vec();
       for i in 0..=modifiers.len() {
         watch_target_key_inputs.extend(modifiers.clone().into_iter().combinations(i).map(
-          |combination| {
-            domain::values::KeyInput::new(from.key(), domain::values::Modifiers::new(combination))
-          },
+          |combination| domain::KeyInput::new(from.key(), domain::Modifiers::new(combination)),
         ));
       }
     }
@@ -210,7 +208,7 @@ impl XEventSource {
   }
 }
 
-impl domain::event::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEventSource {
+impl domain::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEventSource {
   fn initialize_register_state(&self) -> Result<(), Box<dyn std::error::Error>> {
     let display = { self.state.lock().unwrap().display };
     unsafe {
@@ -226,7 +224,7 @@ impl domain::event::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEven
 
   fn register_key(
     &self,
-    key_input: domain::values::KeyInput<XKeySymbol, XModifier>,
+    key_input: domain::KeyInput<XKeySymbol, XModifier>,
   ) -> Result<(), Box<dyn std::error::Error>> {
     let display = { self.state.lock().unwrap().display };
     let key = key_input.key().raw_value();
@@ -255,7 +253,7 @@ impl domain::event::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEven
     Ok(())
   }
 
-  fn next(&self) -> Option<domain::event::Event<XKeySymbol, XModifier, XAppIdentifier>> {
+  fn next(&self) -> Option<domain::Event<XKeySymbol, XModifier, XAppIdentifier>> {
     let mut event: xlib::XEvent = xlib::XEvent { type_: 0 };
 
     loop {
@@ -267,39 +265,41 @@ impl domain::event::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEven
             type_: xlib::KeyPress,
           } => {
             let x_key_sym = xlib::XKeycodeToKeysym(display, event.key.keycode as u8, 0);
-            let key = domain::values::Key::new(x_key_sym);
+            let key = domain::Key::new(x_key_sym);
 
             let modifier_bitmap: u32 = event.key.state;
             let mut modifiers = vec![];
             for i in 0..=31 {
               let mask = 1 << i;
               if (modifier_bitmap & mask) > 0 {
-                modifiers.push(domain::values::Modifier::new(mask))
+                modifiers.push(domain::Modifier::new(mask))
               }
             }
 
-            return Some(domain::event::Event::KeyPressed(
-              domain::values::KeyInput::new(key, domain::values::Modifiers::new(modifiers)),
-            ));
+            return Some(domain::Event::KeyPressed(domain::KeyInput::new(
+              key,
+              domain::Modifiers::new(modifiers),
+            )));
           }
           xlib::XEvent {
             type_: xlib::KeyRelease,
           } => {
             let x_key_sym = xlib::XKeycodeToKeysym(display, event.key.keycode as u8, 0);
-            let key = domain::values::Key::new(x_key_sym);
+            let key = domain::Key::new(x_key_sym);
 
             let modifier_bitmap: u32 = event.key.state;
             let mut modifiers = vec![];
             for i in 0..=31 {
               let mask = 1 << i;
               if (modifier_bitmap & mask) > 0 {
-                modifiers.push(domain::values::Modifier::new(mask))
+                modifiers.push(domain::Modifier::new(mask))
               }
             }
 
-            return Some(domain::event::Event::KeyReleased(
-              domain::values::KeyInput::new(key, domain::values::Modifiers::new(modifiers)),
-            ));
+            return Some(domain::Event::KeyReleased(domain::KeyInput::new(
+              key,
+              domain::Modifiers::new(modifiers),
+            )));
           }
           xlib::XEvent {
             type_: xlib::PropertyNotify,
@@ -312,7 +312,7 @@ impl domain::event::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEven
               state.window = focused_window;
               state.fetch_current_application()
             };
-            return Some(domain::event::Event::ApplicationChange(current_application));
+            return Some(domain::Event::ApplicationChange(current_application));
           }
           _ => {}
         }
@@ -320,7 +320,7 @@ impl domain::event::EventSource<XKeySymbol, XModifier, XAppIdentifier> for XEven
     }
   }
 
-  fn watch_target_key_inputs(&self) -> Vec<domain::values::KeyInput<XKeySymbol, XModifier>> {
+  fn watch_target_key_inputs(&self) -> Vec<domain::KeyInput<XKeySymbol, XModifier>> {
     self.watch_target_key_inputs.clone()
   }
 }
@@ -330,7 +330,7 @@ pub struct XKeyPresser {
 }
 
 impl XKeyPresser {
-  fn key_event(&self, key_input: domain::values::KeyInput<XKeySymbol, XModifier>, evt_type: i32) {
+  fn key_event(&self, key_input: domain::KeyInput<XKeySymbol, XModifier>, evt_type: i32) {
     unsafe {
       let display = { self.state.lock().unwrap().display };
 
@@ -373,12 +373,12 @@ impl XKeyPresser {
   }
 }
 
-impl domain::interpreter::KeyPresser<XKeySymbol, XModifier> for XKeyPresser {
-  fn press(&self, key_input: domain::values::KeyInput<XKeySymbol, XModifier>) {
+impl domain::KeyPresser<XKeySymbol, XModifier> for XKeyPresser {
+  fn press(&self, key_input: domain::KeyInput<XKeySymbol, XModifier>) {
     self.key_event(key_input, xlib::KeyPress);
   }
 
-  fn release(&self, key_input: domain::values::KeyInput<XKeySymbol, XModifier>) {
+  fn release(&self, key_input: domain::KeyInput<XKeySymbol, XModifier>) {
     self.key_event(key_input, xlib::KeyRelease);
   }
 }
