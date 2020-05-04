@@ -1,25 +1,35 @@
 {
-  "remaps": [
-    {
-      "from": "Control-h",
-      "to": "Left"
+  "remap": {
+    "Control-h": {
+      "to": "Left",
+      "with": [
+        "Shift"
+      ]
     },
-    {
-      "from": "Control-j",
-      "to": "Down"
+    "Control-j": {
+      "to": "Down",
+      "with": [
+        "Shift"
+      ]
     },
-    {
-      "from": "Control-k",
-      "to": "Up"
+    "Control-k": {
+      "to": "Up",
+      "with": [
+        "Shift"
+      ]
     },
-    {
-      "from": "Control-l",
-      "to": "Right"
-    },
-    {
-      "from": "Mod1-s",
-      "to": "Control-s"
+    "Control-l": {
+      "to": "Right",
+      "with": [
+        "Shift"
+      ]
     }
-  ],
-  "remaps_for_application": {}
+  },
+  "in_app": {
+    "code-oss": {
+      "Mod1-s": {
+        "to": "Control-s"
+      }
+    }
+  }
 }

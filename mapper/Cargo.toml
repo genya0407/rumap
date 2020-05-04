@@ -1,0 +1,18 @@
+[package]
+name = "mapper"
+version = "0.1.0"
+authors = ["Yusuke Sangenya <longinus.eva@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "*"
+itertools = "0.9"
+flexi_logger = "0.15.2"
+maplit = "1.0.2"
+
+[dev-dependencies]
+speculate = "0.1"
