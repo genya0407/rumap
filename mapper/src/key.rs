@@ -1,17 +1,12 @@
 use std::collections::BTreeSet;
 
-#[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
-pub struct Application<A: PartialOrd + Ord + PartialEq + Eq> {
-  pub name: A,
-}
-
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Matching<M> {
   Unmatched,
   Remain(Modifiers<M>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct KeyInput<
   K: PartialEq + Eq + std::fmt::Debug + Clone,
   M: PartialOrd + Ord + std::fmt::Debug + Clone,
@@ -60,7 +55,7 @@ impl<K: PartialEq + Eq + std::fmt::Debug + Clone, M: PartialOrd + Ord + std::fmt
   }
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord)]
 pub struct Key<K: PartialEq + Eq + Clone> {
   value: K,
 }
@@ -79,7 +74,7 @@ enum ModifiersSub<M> {
   SubResult(Modifiers<M>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Modifiers<M> {
   value: BTreeSet<Modifier<M>>,
 }
