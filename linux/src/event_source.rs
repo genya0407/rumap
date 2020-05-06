@@ -1,4 +1,3 @@
-use super::has_display::HasDisplay;
 use super::*;
 use std::ffi::CString;
 use x11::xlib;
@@ -21,24 +20,24 @@ pub trait IsEventSource {
   fn next(&self) -> Option<Event>;
 }
 
-pub trait EventSource {}
+pub struct XEventSource {
+  display: XDisplay,
+}
 
-impl<E: EventSource + HasDisplay> IsEventSource for E {
+impl IsEventSource for XEventSource {
   fn ungrab_keys(&self) {
-    let display = self.display();
-
     unsafe {
       xlib::XUngrabKey(
-        display,
+        self.display,
         xlib::AnyKey,
         xlib::AnyModifier,
-        xlib::XDefaultRootWindow(display),
+        xlib::XDefaultRootWindow(self.display),
       );
     }
   }
 
   fn grab_keys(&self, key_inputs: Vec<KeyInput>) {
-    let display = self.display();
+    let display = self.display;
     unsafe {
       for key_input in key_inputs {
         let key = key_input.key().raw_value();
@@ -70,13 +69,12 @@ impl<E: EventSource + HasDisplay> IsEventSource for E {
 
     loop {
       unsafe {
-        let display = self.display();
-        xlib::XNextEvent(display, &mut event);
+        xlib::XNextEvent(self.display, &mut event);
         match event {
           xlib::XEvent {
             type_: xlib::KeyPress,
           } => {
-            let x_key_sym = xlib::XKeycodeToKeysym(display, event.key.keycode as u8, 0);
+            let x_key_sym = xlib::XKeycodeToKeysym(self.display, event.key.keycode as u8, 0);
             let key = Key::new(x_key_sym);
 
             let modifier_bitmap: u32 = event.key.state;
@@ -95,7 +93,7 @@ impl<E: EventSource + HasDisplay> IsEventSource for E {
           xlib::XEvent {
             type_: xlib::KeyRelease,
           } => {
-            let x_key_sym = xlib::XKeycodeToKeysym(display, event.key.keycode as u8, 0);
+            let x_key_sym = xlib::XKeycodeToKeysym(self.display, event.key.keycode as u8, 0);
             let key = Key::new(x_key_sym);
 
             let modifier_bitmap: u32 = event.key.state;
@@ -114,10 +112,7 @@ impl<E: EventSource + HasDisplay> IsEventSource for E {
           xlib::XEvent {
             type_: xlib::PropertyNotify,
           } => {
-            let mut focused_window = 0;
-            let mut focus_state = 0;
-            xlib::XGetInputFocus(display, &mut focused_window, &mut focus_state);
-            let application = fetch_application_of_window(focused_window, self.display());
+            let application = self.fetch_focused_application();
             return Some(Event::ApplicationChanged {
               next_application: application,
             });
@@ -129,79 +124,97 @@ impl<E: EventSource + HasDisplay> IsEventSource for E {
   }
 }
 
-fn fetch_application_of_window(
-  window: xlib::Window,
-  display: *mut xlib::Display,
-) -> Option<Application> {
-  unsafe {
-    let class_atom = xlib::XInternAtom(
-      display,
-      CString::new("WM_CLASS").unwrap().as_ptr(),
-      xlib::True,
-    );
+impl XEventSource {
+  pub fn new(display: XDisplay) -> Self {
+    Self { display }
+  }
 
-    let mut x_text_property = xlib::XTextProperty {
-      encoding: 0,
-      nitems: 0,
-      format: 0,
-      value: &mut 0,
-    };
+  fn fetch_focused_application(&self) -> Option<Application> {
+    unsafe {
+      let mut focused_window = 0;
+      let mut focus_state = 0;
+      xlib::XGetInputFocus(self.display, &mut focused_window, &mut focus_state);
 
-    // WM_CLASSがとれるWindowsを引き当てるまで親方向にWindow treeを遡る
-    // 引き当てたら、x_text_property.valueにその値が入っているはず
-    let mut target_window: xlib::Window = window;
-    loop {
-      if xlib::XGetTextProperty(display, target_window, &mut x_text_property, class_atom) == 1 {
-        break;
+      let class_atom = xlib::XInternAtom(
+        self.display,
+        CString::new("WM_CLASS").unwrap().as_ptr(),
+        xlib::True,
+      );
+
+      let mut x_text_property = xlib::XTextProperty {
+        encoding: 0,
+        nitems: 0,
+        format: 0,
+        value: &mut 0,
+      };
+
+      // WM_CLASSがとれるWindowsを引き当てるまで親方向にWindow treeを遡る
+      // 引き当てたら、x_text_property.valueにその値が入っているはず
+      let mut target_window: xlib::Window = focused_window;
+      loop {
+        if xlib::XGetTextProperty(
+          self.display,
+          target_window,
+          &mut x_text_property,
+          class_atom,
+        ) == 1
+        {
+          break;
+        }
+
+        let mut nchildren: u32 = 0;
+        let mut root: xlib::Window = 0;
+        let mut parent: xlib::Window = 0;
+        let mut children: *mut xlib::Window = &mut 0;
+
+        if xlib::XQueryTree(
+          self.display,
+          target_window,
+          &mut root,
+          &mut parent,
+          &mut children,
+          &mut nchildren,
+        ) == 0
+        {
+          break;
+        }
+        if !children.is_null() {
+          xlib::XFree(children as *mut std::ffi::c_void);
+        }
+        if parent == 0 {
+          // root windowのparentは0になる。0にたいしてXGetTextProperyをすると死ぬのでここで終了する
+          return None;
+        }
+        target_window = parent;
       }
 
-      let mut nchildren: u32 = 0;
-      let mut root: xlib::Window = 0;
-      let mut parent: xlib::Window = 0;
-      let mut children: *mut xlib::Window = &mut 0;
-
-      if xlib::XQueryTree(
-        display,
-        target_window,
-        &mut root,
-        &mut parent,
-        &mut children,
-        &mut nchildren,
-      ) == 0
-      {
-        break;
-      }
-      if !children.is_null() {
-        xlib::XFree(children as *mut std::ffi::c_void);
-      }
-      if parent == 0 {
-        // root windowのparentは0になる。0にたいしてXGetTextProperyをすると死ぬのでここで終了する
-        return None;
-      }
-      target_window = parent;
-    }
-
-    if x_text_property.nitems > 0 && !x_text_property.value.is_null() {
-      if x_text_property.encoding == xlib::XA_STRING {
-        Some(Application::new(
-          CString::from_raw(x_text_property.value as *mut i8)
-            .into_string()
-            .unwrap(),
-        ))
-      } else {
-        let mut char_list: *mut *mut i8 = std::ptr::null_mut();
-        let mut count: i32 = 0;
-        xlib::XmbTextPropertyToTextList(display, &x_text_property, &mut char_list, &mut count);
-        let name = if count > 0 && !(*char_list).is_null() {
-          CString::from_raw(*char_list).into_string().unwrap()
+      if x_text_property.nitems > 0 && !x_text_property.value.is_null() {
+        if x_text_property.encoding == xlib::XA_STRING {
+          Some(Application::new(
+            CString::from_raw(x_text_property.value as *mut i8)
+              .into_string()
+              .unwrap(),
+          ))
         } else {
-          String::from("")
-        };
-        xlib::XFreeStringList(char_list);
-        Some(Application::new(name))
+          let mut char_list: *mut *mut i8 = std::ptr::null_mut();
+          let mut count: i32 = 0;
+          xlib::XmbTextPropertyToTextList(
+            self.display,
+            &x_text_property,
+            &mut char_list,
+            &mut count,
+          );
+          let name = if count > 0 && !(*char_list).is_null() {
+            CString::from_raw(*char_list).into_string().unwrap()
+          } else {
+            String::from("")
+          };
+          xlib::XFreeStringList(char_list);
+          Some(Application::new(name))
+        }
+      } else {
+        None
       }
-    } else {
-      None
     }
   }
 }
