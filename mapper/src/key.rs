@@ -25,6 +25,13 @@ impl<K: PartialEq + Eq + std::fmt::Debug + Clone, M: PartialOrd + Ord + std::fmt
     }
   }
 
+  pub fn of(k: K, ms: Vec<M>) -> Self {
+    Self::new(
+      Key::new(k),
+      Modifiers::new(ms.into_iter().map(Modifier::new).collect()),
+    )
+  }
+
   pub fn match_to(&self, target: &Self) -> Matching<M> {
     if self.key == target.key {
       if let ModifiersSub::SubResult(remaining_modifiers) =

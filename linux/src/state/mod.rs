@@ -1,35 +1,38 @@
+mod event_finished_error;
+
+use self::event_finished_error::*;
 use crate::{
-  Action, Application, Event, Focus, IsEventSource, IsKeyHandler, KeyInput, PossibleKeyinputFinder,
-  XAppIdentifier, XExecution, XKeySymbol, XModifier,
+  Action, Application, Event, Focus, IsEventSource, IsKeyHandler, IsShellCommandExecutor, KeyInput,
+  PossibleKeyinputFinder, XAppIdentifier, XExecution, XKeySymbol, XModifier,
 };
 use mapper::IsKeyBindForFocus;
 
-#[derive(Debug)]
-pub struct EventFinishedError;
-
-impl std::fmt::Display for EventFinishedError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "EventFinished")
-  }
-}
-
-impl std::error::Error for EventFinishedError {}
-
 pub trait IsState {
-  fn run(&mut self) -> Result<(), Box<dyn std::error::Error>>;
+  fn run(&mut self);
 }
 
-pub struct State<'a, ES: IsEventSource, KH: IsKeyHandler> {
+pub struct State<
+  KBFF: IsKeyBindForFocus<XAppIdentifier, XKeySymbol, XModifier, XExecution>,
+  ES: IsEventSource,
+  KH: IsKeyHandler,
+  SCE: IsShellCommandExecutor,
+> {
   pub application: Option<Application>,
-  pub event_source: ES,
-  pub key_handler: KH,
-  pub key_bind_for_focus:
-    mapper::KeyBindForFocus<'a, XAppIdentifier, XKeySymbol, XModifier, XExecution>,
-  pub possible_keyinput_finder: PossibleKeyinputFinder,
+  shell_command_executor: SCE,
+  event_source: ES,
+  key_handler: KH,
+  key_bind_for_focus: KBFF,
+  possible_keyinput_finder: PossibleKeyinputFinder,
 }
 
-impl<'a, ES: IsEventSource, KH: IsKeyHandler> State<'a, ES, KH> {
-  pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+impl<
+    KBFF: IsKeyBindForFocus<XAppIdentifier, XKeySymbol, XModifier, XExecution>,
+    ES: IsEventSource,
+    KH: IsKeyHandler,
+    SCE: IsShellCommandExecutor,
+  > State<KBFF, ES, KH, SCE>
+{
+  pub fn run(&mut self) {
     self.event_source.grab_keys(self.watch_target_key_inputs());
 
     loop {
@@ -50,7 +53,7 @@ impl<'a, ES: IsEventSource, KH: IsKeyHandler> State<'a, ES, KH> {
               } => self.key_handler.press_key(bound_key_input),
               Action::Execution {
                 execution: XExecution::ShellCommand(command),
-              } => self.exec_shell_command(command),
+              } => self.shell_command_executor.execute(command),
             }
           } else {
             self.key_handler.press_key(key_input)
@@ -67,38 +70,40 @@ impl<'a, ES: IsEventSource, KH: IsKeyHandler> State<'a, ES, KH> {
               } => self.key_handler.release_key(bound_key_input),
               Action::Execution {
                 execution: XExecution::ShellCommand(command),
-              } => self.exec_shell_command(command),
+              } => self.shell_command_executor.execute(command),
             }
           } else {
             self.key_handler.release_key(key_input)
           }
         }
-        None => return Err(Box::new(EventFinishedError)),
+        None => return,
       }
     }
   }
 }
 
-impl<'a, ES: IsEventSource, KH: IsKeyHandler> State<'a, ES, KH> {
+impl<
+    KBFF: IsKeyBindForFocus<XAppIdentifier, XKeySymbol, XModifier, XExecution>,
+    ES: IsEventSource,
+    KH: IsKeyHandler,
+    SCE: IsShellCommandExecutor,
+  > State<KBFF, ES, KH, SCE>
+{
   pub fn new(
-    key_bind_for_focus: mapper::KeyBindForFocus<
-      'a,
-      XAppIdentifier,
-      XKeySymbol,
-      XModifier,
-      XExecution,
-    >,
+    key_bind_for_focus: KBFF,
     possible_keyinput_finder: PossibleKeyinputFinder,
     event_source: ES,
     key_handler: KH,
-  ) -> Result<Self, mapper::config::InvalidConfigError> {
-    Ok(Self {
+    shell_command_executor: SCE,
+  ) -> Self {
+    Self {
       application: None,
       event_source: event_source,
       key_handler: key_handler,
       key_bind_for_focus: key_bind_for_focus,
       possible_keyinput_finder: possible_keyinput_finder,
-    })
+      shell_command_executor: shell_command_executor,
+    }
   }
 
   fn watch_target_key_inputs(&self) -> Vec<KeyInput> {
@@ -114,9 +119,5 @@ impl<'a, ES: IsEventSource, KH: IsKeyHandler> State<'a, ES, KH> {
     };
     log::trace!("{:?}", f);
     f
-  }
-
-  fn exec_shell_command(&self, _command: String) {
-    // FIXME: 別のtraitに切り出してinjectする
   }
 }

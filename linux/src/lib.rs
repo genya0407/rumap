@@ -3,11 +3,13 @@ pub mod config;
 mod event_source;
 mod execution_key_bind;
 mod key_handler;
+mod shell_command_executor;
 mod state;
 
 pub use event_source::*;
 pub use execution_key_bind::*;
 pub use key_handler::*;
+pub use shell_command_executor::*;
 pub use state::*;
 
 pub type XAppIdentifier = String;

@@ -30,6 +30,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     possible_keyinput_finder,
     event_source,
     key_handler,
-  )?;
-  state.run()
+    linux::ShellCommandExecutor,
+  );
+  state.run();
+  Ok(())
 }

@@ -2,6 +2,7 @@ use super::*;
 use std::ffi::CString;
 use x11::xlib;
 
+#[derive(Clone)]
 pub enum Event {
   KeyPressed {
     key_input: KeyInput,

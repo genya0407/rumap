@@ -93,6 +93,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "log",
+ "maplit",
  "mapper",
  "serde_json",
  "speculate",
