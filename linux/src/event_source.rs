@@ -1,31 +1,13 @@
 use super::*;
+use mapper::IsEventSource;
 use std::ffi::CString;
 use x11::xlib;
-
-#[derive(Clone)]
-pub enum Event {
-  KeyPressed {
-    key_input: KeyInput,
-  },
-  KeyReleased {
-    key_input: KeyInput,
-  },
-  ApplicationChanged {
-    next_application: Option<Application>,
-  },
-}
-
-pub trait IsEventSource {
-  fn ungrab_keys(&self);
-  fn grab_keys(&self, key_inputs: Vec<KeyInput>);
-  fn next(&self) -> Option<Event>;
-}
 
 pub struct XEventSource {
   display: XDisplay,
 }
 
-impl IsEventSource for XEventSource {
+impl IsEventSource<XKeySymbol, XModifier, XAppIdentifier> for XEventSource {
   fn ungrab_keys(&self) {
     unsafe {
       xlib::XUngrabKey(

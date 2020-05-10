@@ -5,19 +5,22 @@ speculate! {
     describe "#run" {
       context "when ApplicationChanged event occured" {
         before {
-          let executor = crate::mock::MockShellCommandExecutor::new();
-          let keybind_for_focus = crate::mock::MockKeyBindForFocus::new(
+          use mapper::*;
+          use mapper::mock::*;
+
+          let executor = MockShellCommandExecutor::new();
+          let keybind_for_focus = MockKeyBindForFocus::new(
             maplit::btreemap!{},
             maplit::btreemap!{},
           );
           let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = crate::mock::MockKeyHandler::new();
+          let key_handler = MockKeyHandler::new();
 
-          let event_source = crate::mock::MockEventSource::new(vec![
-            linux::Event::ApplicationChanged { next_application: Some(mapper::Application::new("next_app".to_string())) }
+          let event_source = MockEventSource::new(vec![
+            Event::ApplicationChanged { next_application: Some(mapper::Application::new("next_app".to_string())) }
           ]);
 
-          let mut state = linux::State::new(
+          let mut state = State::new(
             keybind_for_focus.clone(),
             possible_keyinput_finder,
             event_source.clone(),
@@ -42,25 +45,26 @@ speculate! {
       context "when KeyPressed event occured, and keybind exists" {
         before {
           use mapper::*;
+          use mapper::mock::*;
 
-          let executor = crate::mock::MockShellCommandExecutor::new();
+          let executor = MockShellCommandExecutor::new();
           let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = crate::mock::MockKeyHandler::new();
+          let key_handler = MockKeyHandler::new();
 
-          let from = KeyInput::of(1, vec![2]);
-          let to = KeyInput::of(11, vec![12]);
+          let from = KeyInput::of(String::from("a"), vec![String::from("Alt")]);
+          let to = KeyInput::of(String::from("b"), vec![String::from("Control")]);
 
-          let keybind_for_focus = crate::mock::MockKeyBindForFocus::new(
+          let keybind_for_focus = MockKeyBindForFocus::new(
             maplit::btreemap!{
               (Focus::NoFocus, from.clone()) => Action::Key { key_input: to.clone() }
             },
             maplit::btreemap!{},
           );
-          let event_source = crate::mock::MockEventSource::new(vec![
-            linux::Event::KeyPressed { key_input: from.clone() }
+          let event_source = MockEventSource::new(vec![
+            Event::KeyPressed { key_input: from.clone() }
           ]);
 
-          let mut state = linux::State::new(
+          let mut state = State::new(
             keybind_for_focus.clone(),
             possible_keyinput_finder,
             event_source.clone(),
@@ -81,26 +85,27 @@ speculate! {
       context "when KeyPressed event occured, and keybind does not exist" {
         before {
           use mapper::*;
+          use mapper::mock::*;
 
-          let executor = crate::mock::MockShellCommandExecutor::new();
+          let executor = MockShellCommandExecutor::new();
           let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = crate::mock::MockKeyHandler::new();
+          let key_handler = MockKeyHandler::new();
 
-          let from = KeyInput::of(1, vec![2]);
-          let to = KeyInput::of(11, vec![12]);
+          let from = KeyInput::of(String::from("a"), vec![String::from("Alt")]);
+          let to = KeyInput::of(String::from("b"), vec![String::from("Control")]);
 
-          let keybind_for_focus = crate::mock::MockKeyBindForFocus::new(
+          let keybind_for_focus = MockKeyBindForFocus::new(
             maplit::btreemap!{
               (Focus::NoFocus, from.clone()) => Action::Key { key_input: to.clone() }
             },
             maplit::btreemap!{},
           );
-          let another_key = KeyInput::of(101, vec![102]);
-          let event_source = crate::mock::MockEventSource::new(vec![
-            linux::Event::KeyPressed { key_input: another_key.clone() }
+          let another_key = KeyInput::of(String::from("c"), vec![String::from("Shift")]);
+          let event_source = MockEventSource::new(vec![
+            Event::KeyPressed { key_input: another_key.clone() }
           ]);
 
-          let mut state = linux::State::new(
+          let mut state = State::new(
             keybind_for_focus.clone(),
             possible_keyinput_finder,
             event_source.clone(),
@@ -122,25 +127,26 @@ speculate! {
       context "when KeyReleased event occured, and keybind exists" {
         before {
           use mapper::*;
+          use mapper::mock::*;
 
-          let executor = crate::mock::MockShellCommandExecutor::new();
+          let executor = MockShellCommandExecutor::new();
           let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = crate::mock::MockKeyHandler::new();
+          let key_handler = MockKeyHandler::new();
 
-          let from = KeyInput::of(1, vec![2]);
-          let to = KeyInput::of(11, vec![12]);
+          let from = KeyInput::of(String::from("a"), vec![String::from("Alt")]);
+          let to = KeyInput::of(String::from("b"), vec![String::from("Control")]);
 
-          let keybind_for_focus = crate::mock::MockKeyBindForFocus::new(
+          let keybind_for_focus = MockKeyBindForFocus::new(
             maplit::btreemap!{},
             maplit::btreemap!{
               (Focus::NoFocus, from.clone()) => Action::Key { key_input: to.clone() }
             },
           );
-          let event_source = crate::mock::MockEventSource::new(vec![
-            linux::Event::KeyReleased { key_input: from.clone() }
+          let event_source = MockEventSource::new(vec![
+            Event::KeyReleased { key_input: from.clone() }
           ]);
 
-          let mut state = linux::State::new(
+          let mut state = State::new(
             keybind_for_focus.clone(),
             possible_keyinput_finder,
             event_source.clone(),
@@ -161,26 +167,27 @@ speculate! {
       context "when KeyReleased event occured, and keybind does not exist" {
         before {
           use mapper::*;
+          use mapper::mock::*;
 
-          let executor = crate::mock::MockShellCommandExecutor::new();
+          let executor = MockShellCommandExecutor::new();
           let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = crate::mock::MockKeyHandler::new();
+          let key_handler = MockKeyHandler::new();
 
-          let from = KeyInput::of(1, vec![2]);
-          let to = KeyInput::of(11, vec![12]);
+          let from = KeyInput::of(String::from("a"), vec![String::from("Alt")]);
+          let to = KeyInput::of(String::from("b"), vec![String::from("Control")]);
 
-          let keybind_for_focus = crate::mock::MockKeyBindForFocus::new(
+          let keybind_for_focus = MockKeyBindForFocus::new(
             maplit::btreemap!{},
             maplit::btreemap!{
               (Focus::NoFocus, from.clone()) => Action::Key { key_input: to.clone() }
             },
           );
-          let another_key = KeyInput::of(101, vec![102]);
-          let event_source = crate::mock::MockEventSource::new(vec![
-            linux::Event::KeyReleased { key_input: another_key.clone() }
+          let another_key = KeyInput::of(String::from("c"), vec![String::from("Shift")]);
+          let event_source = MockEventSource::new(vec![
+            Event::KeyReleased { key_input: another_key.clone() }
           ]);
 
-          let mut state = linux::State::new(
+          let mut state = State::new(
             keybind_for_focus.clone(),
             possible_keyinput_finder,
             event_source.clone(),

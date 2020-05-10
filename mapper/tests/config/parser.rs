@@ -38,7 +38,7 @@ speculate! {
           "#
         ).unwrap();
 
-        let possible_keyinput_finder = Parser::build(&crate::mock::StringIntoDomain)
+        let possible_keyinput_finder = Parser::build(&mapper::mock::StringIntoDomain)
           .build_possible_keyinput_finder(config)
           .unwrap();
       }
@@ -124,7 +124,7 @@ speculate! {
           "#
         ).unwrap();
 
-        let possible_keyinput_finder = Parser::build(&crate::mock::StringIntoDomain)
+        let possible_keyinput_finder = Parser::build(&mapper::mock::StringIntoDomain)
           .build_possible_keyinput_finder(config)
           .unwrap();
       }
@@ -172,7 +172,7 @@ speculate! {
           in_app: in_app,
         };
 
-        let keybind_for_focus = Parser::build(&crate::mock::StringIntoDomain)
+        let keybind_for_focus = Parser::build(&mapper::mock::StringIntoDomain)
           .build_keybind_for_focus(config)
           .unwrap();
       }
@@ -248,7 +248,7 @@ speculate! {
           remap: global_remaps,
           in_app: in_app,
         };
-        let keybind_for_focus = Parser::build(&crate::mock::StringIntoDomain)
+        let keybind_for_focus = Parser::build(&mapper::mock::StringIntoDomain)
           .build_keybind_for_focus(config)
           .unwrap();
       }

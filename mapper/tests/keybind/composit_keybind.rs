@@ -4,14 +4,14 @@ speculate! {
   describe "CompositKeyBind" {
     context "when two keybind are composed" {
       before {
-        use crate::mock::TestAction;
+        use mapper::mock::MockKeyBind;
         use mapper::{Action, CompositKeyBind, Key, KeyBind, KeyInput, Modifiers};
 
-        let keybind_1 = TestAction {
+        let keybind_1 = MockKeyBind {
           from: "bind_1".to_string(),
           execution: "exec_1".to_string()
         };
-        let keybind_2 = TestAction {
+        let keybind_2 = MockKeyBind {
           from: "bind_2".to_string(),
           execution: "exec_2".to_string()
         };

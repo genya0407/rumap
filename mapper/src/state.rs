@@ -1,36 +1,38 @@
-mod event_finished_error;
-
-use self::event_finished_error::*;
-use crate::{
-  Action, Application, Event, Focus, IsEventSource, IsKeyHandler, IsShellCommandExecutor, KeyInput,
-  PossibleKeyinputFinder, XAppIdentifier, XExecution, XKeySymbol, XModifier,
-};
-use mapper::IsKeyBindForFocus;
+use crate::*;
 
 pub trait IsState {
   fn run(&mut self);
 }
 
 pub struct State<
-  KBFF: IsKeyBindForFocus<XAppIdentifier, XKeySymbol, XModifier, XExecution>,
-  ES: IsEventSource,
-  KH: IsKeyHandler,
-  SCE: IsShellCommandExecutor,
+  A: PartialEq + Eq + PartialOrd + Ord + Clone,
+  K: PartialEq + Eq + std::fmt::Debug + PartialOrd + Ord + Clone,
+  M: PartialOrd + Ord + std::fmt::Debug + Clone,
+  C: std::fmt::Debug + Clone,
+  KBFF: IsKeyBindForFocus<A, K, M, C>,
+  ES: IsEventSource<K, M, A>,
+  KH: IsKeyHandler<K, M>,
+  SCE: IsShellCommandExecutor<C>,
 > {
-  pub application: Option<Application>,
+  pub application: Option<Application<A>>,
   shell_command_executor: SCE,
   event_source: ES,
   key_handler: KH,
   key_bind_for_focus: KBFF,
-  possible_keyinput_finder: PossibleKeyinputFinder,
+  possible_keyinput_finder: PossibleKeyinputFinder<A, K, M>,
+  _c: std::marker::PhantomData<C>,
 }
 
 impl<
-    KBFF: IsKeyBindForFocus<XAppIdentifier, XKeySymbol, XModifier, XExecution>,
-    ES: IsEventSource,
-    KH: IsKeyHandler,
-    SCE: IsShellCommandExecutor,
-  > State<KBFF, ES, KH, SCE>
+    A: PartialEq + Eq + PartialOrd + Ord + Clone,
+    K: PartialEq + Eq + std::fmt::Debug + PartialOrd + Ord + Clone,
+    M: PartialOrd + Ord + std::fmt::Debug + Clone,
+    C: std::fmt::Debug + Clone,
+    KBFF: IsKeyBindForFocus<A, K, M, C>,
+    ES: IsEventSource<K, M, A>,
+    KH: IsKeyHandler<K, M>,
+    SCE: IsShellCommandExecutor<C>,
+  > State<A, K, M, C, KBFF, ES, KH, SCE>
 {
   pub fn run(&mut self) {
     self.event_source.grab_keys(self.watch_target_key_inputs());
@@ -51,9 +53,7 @@ impl<
               Action::Key {
                 key_input: bound_key_input,
               } => self.key_handler.press_key(bound_key_input),
-              Action::Execution {
-                execution: XExecution::ShellCommand(command),
-              } => self.shell_command_executor.execute(command),
+              Action::Execution { execution } => self.shell_command_executor.execute(execution),
             }
           } else {
             self.key_handler.press_key(key_input)
@@ -68,9 +68,7 @@ impl<
               Action::Key {
                 key_input: bound_key_input,
               } => self.key_handler.release_key(bound_key_input),
-              Action::Execution {
-                execution: XExecution::ShellCommand(command),
-              } => self.shell_command_executor.execute(command),
+              Action::Execution { execution } => self.shell_command_executor.execute(execution),
             }
           } else {
             self.key_handler.release_key(key_input)
@@ -83,15 +81,19 @@ impl<
 }
 
 impl<
-    KBFF: IsKeyBindForFocus<XAppIdentifier, XKeySymbol, XModifier, XExecution>,
-    ES: IsEventSource,
-    KH: IsKeyHandler,
-    SCE: IsShellCommandExecutor,
-  > State<KBFF, ES, KH, SCE>
+    A: PartialEq + Eq + PartialOrd + Ord + Clone,
+    K: PartialEq + Eq + std::fmt::Debug + Clone + PartialOrd + Ord,
+    M: PartialOrd + Ord + std::fmt::Debug + Clone,
+    C: std::fmt::Debug + Clone,
+    KBFF: IsKeyBindForFocus<A, K, M, C>,
+    ES: IsEventSource<K, M, A>,
+    KH: IsKeyHandler<K, M>,
+    SCE: IsShellCommandExecutor<C>,
+  > State<A, K, M, C, KBFF, ES, KH, SCE>
 {
   pub fn new(
     key_bind_for_focus: KBFF,
-    possible_keyinput_finder: PossibleKeyinputFinder,
+    possible_keyinput_finder: PossibleKeyinputFinder<A, K, M>,
     event_source: ES,
     key_handler: KH,
     shell_command_executor: SCE,
@@ -103,21 +105,20 @@ impl<
       key_bind_for_focus: key_bind_for_focus,
       possible_keyinput_finder: possible_keyinput_finder,
       shell_command_executor: shell_command_executor,
+      _c: std::marker::PhantomData,
     }
   }
 
-  fn watch_target_key_inputs(&self) -> Vec<KeyInput> {
+  fn watch_target_key_inputs(&self) -> Vec<KeyInput<K, M>> {
     let keyinputs = self.possible_keyinput_finder.find(self.focus());
     log::trace!("watch_target_key_inputs: {:?}", keyinputs);
     keyinputs
   }
 
-  fn focus(&self) -> Focus {
-    let f = match self.application.clone() {
+  fn focus(&self) -> Focus<A> {
+    match self.application.clone() {
       Some(app) => Focus::Focused { application: app },
       None => Focus::NoFocus,
-    };
-    log::trace!("{:?}", f);
-    f
+    }
   }
 }

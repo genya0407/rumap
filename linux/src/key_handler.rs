@@ -1,17 +1,12 @@
-use super::KeyInput;
-use super::XDisplay;
+use super::*;
+use mapper::IsKeyHandler;
 use x11::xlib;
-
-pub trait IsKeyHandler {
-  fn press_key(&self, key_input: KeyInput);
-  fn release_key(&self, key_input: KeyInput);
-}
 
 pub struct XKeyHandler {
   display: XDisplay,
 }
 
-impl IsKeyHandler for XKeyHandler {
+impl IsKeyHandler<XKeySymbol, XModifier> for XKeyHandler {
   fn press_key(&self, key_input: KeyInput) {
     self.key_event(self.display, key_input, xlib::KeyPress);
   }
