@@ -1,4 +1,4 @@
-use linux::*;
+use crate::*;
 use std::cell::RefCell;
 
 #[derive(Clone)]
@@ -14,7 +14,7 @@ impl MockShellCommandExecutor {
   }
 }
 
-impl IsShellCommandExecutor for MockShellCommandExecutor {
+impl IsShellCommandExecutor<String> for MockShellCommandExecutor {
   fn execute(&self, command: String) {
     self.arguments.borrow_mut().push(command);
   }

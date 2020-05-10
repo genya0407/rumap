@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let display = unsafe { x11::xlib::XOpenDisplay(std::ptr::null()) };
   let event_source = linux::XEventSource::new(display);
   let key_handler = linux::XKeyHandler::new(display);
-  let mut state = linux::State::new(
+  let mut state = mapper::State::new(
     key_bind_for_focus,
     possible_keyinput_finder,
     event_source,

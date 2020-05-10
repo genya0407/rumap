@@ -1,17 +1,19 @@
 use speculate::speculate;
 
-use crate::mock::TestAction;
-use mapper::{Application, Key, KeyBind, Focus, IsKeyBindForFocus, KeyBindForFocus, KeyInput, Modifiers};
+use mapper::mock::MockKeyBind;
+use mapper::{
+  Application, Focus, IsKeyBindForFocus, Key, KeyBind, KeyBindForFocus, KeyInput, Modifiers,
+};
 
 speculate! {
   describe "KeyBindForFocus#pressed" {
     context "global and inapp keybinds exist" {
       before {
-        let global_keybind = Box::new(TestAction {
+        let global_keybind = Box::new(MockKeyBind {
           from: "global".to_string(),
           execution: "global_execution".to_string()
         });
-        let inapp_keybind: Box<dyn KeyBind<String, String, String>> = Box::new(TestAction {
+        let inapp_keybind: Box<dyn KeyBind<String, String, String>> = Box::new(MockKeyBind {
           from: "inapp".to_string(),
           execution: "inapp_execution".to_string()
         });
@@ -76,11 +78,11 @@ speculate! {
   describe "KeyBindForFocus#released" {
     context "global and inapp keybinds exist" {
       before {
-        let global_keybind = Box::new(TestAction {
+        let global_keybind = Box::new(MockKeyBind {
           from: "global".to_string(),
           execution: "global_execution".to_string()
         });
-        let inapp_keybind: Box<dyn KeyBind<String, String, String>> = Box::new(TestAction {
+        let inapp_keybind: Box<dyn KeyBind<String, String, String>> = Box::new(MockKeyBind {
           from: "inapp".to_string(),
           execution: "inapp_execution".to_string()
         });
