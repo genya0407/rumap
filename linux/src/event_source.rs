@@ -96,6 +96,7 @@ impl IsEventSource<XKeySymbol, XModifier, XAppIdentifier> for XEventSource {
             type_: xlib::PropertyNotify,
           } => {
             let application = self.fetch_focused_application();
+            log::info!("{:?}", application);
             return Some(Event::ApplicationChanged {
               next_application: application,
             });

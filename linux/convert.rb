@@ -16,7 +16,7 @@ class Converter
     in { to: { execute: execute } }
       @current_context.merge!(_remap_execution(key, execute: execute))
     in { to: to, with_modifier: with }
-      @current_context.merge!(_remap_key(key, to: to, with: with))
+      @current_context.merge!(_remap_key(key, to: to, with: Array(with)))
     in { to: to }
       @current_context.merge!(_remap_key(key, to: to, with: []))
     else
@@ -25,15 +25,17 @@ class Converter
   end
 
   def window(class_only:)
-    @in_app[class_only] ||= {}
-    @current_context = @in_app[class_only]
-    yield
-    @current_context = @global
+    Array(class_only).each do |class_only|
+      @in_app[class_only] ||= {}
+      @current_context = @in_app[class_only]
+      yield
+      @current_context = @global
+    end
   end
 
   def to_json
     JSON.generate(
-      global: @global,
+      remap: @global,
       in_app: @in_app,
     )
   end
@@ -51,4 +53,7 @@ class Converter
   end
 end
 
-puts Converter.new.instance_eval(File.read ARGV[0]).to_json
+converter = Converter.new
+converter.instance_eval($stdin.read)
+
+puts converter.to_json
