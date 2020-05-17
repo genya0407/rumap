@@ -4611,6 +4611,16 @@ fn generate_modname_to_mask() -> BTreeMap<&'static str, u32> {
   modifiers.insert("Button5", 1 << 12);
   modifiers.insert("AnyModifier", 1 << 15);
   // code generation finished
+
+  // aliases start
+  modifiers.insert("Alt", *modifiers.get("Mod1").unwrap());
+  modifiers.insert("NumLock", *modifiers.get("Mod2").unwrap());
+  modifiers.insert("Super", *modifiers.get("Mod4").unwrap());
+  modifiers.insert("C", *modifiers.get("Control").unwrap());
+  modifiers.insert("S", *modifiers.get("Shift").unwrap());
+  modifiers.insert("A", *modifiers.get("Alt").unwrap());
+  // aliases finished
+
   modifiers
 }
 
