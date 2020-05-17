@@ -54,6 +54,6 @@ class Converter
 end
 
 converter = Converter.new
-converter.instance_eval($stdin.read)
+converter.instance_eval(File.read ARGV[0])
 
 puts converter.to_json

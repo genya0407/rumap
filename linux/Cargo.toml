@@ -23,6 +23,8 @@ itertools = "0.9"
 serde_json = "1.0"
 log = "*"
 flexi_logger = "0.15.2"
+clap = { version = "~2.27.0", features = ["yaml"] }
+tempfile = "3"
 
 [dev-dependencies]
 speculate = "0.1"

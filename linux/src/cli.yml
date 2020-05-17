@@ -1,0 +1,15 @@
+name: rumap
+version: "0.1"
+author: Yusuke Sangenya <longinus.eva@gmail.com>
+about: keybinder
+args:
+    - xremap_config:
+        long: xremap-config
+        value_name: FILE
+        help: Sets a xremap-conpatible keybind config file.
+        takes_value: true
+    - config:
+        long: config
+        value_name: FILE
+        help: Sets a keybind config file.
+        takes_value: true
