@@ -7,9 +7,6 @@ remap 'C-k', to: 'Up', with_modifier: 'Shift'
 remap 'C-l', to: 'Right', with_modifier: 'Shift'
 remap 'C-BackSpace', to: 'Delete'
 
-# test
-remap 'Alt-s', to: 'C-s'
-
 # mac
 remap 'Alt-a', to: 'C-a'
 
@@ -33,11 +30,6 @@ window class_only: 'konsole' do
   remap 'Alt-t', to: 'C-Shift-t'
   remap 'Alt-d', to: 'C-parenleft'
 end
-
-# workspace
-
-# remap 'Ctrl-Super-j', to: 'Super-Next'
-# remap 'Ctrl-Super-k', to: 'Super-Prior'
 
 # utilities
 
