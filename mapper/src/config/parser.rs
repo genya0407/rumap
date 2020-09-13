@@ -94,7 +94,7 @@ impl<
     for (from_config, action) in config.remap.0.into_iter() {
       let possible_modifiers = match action {
         config::values::Action::KeyInput { to: _, with } => with.unwrap_or_default(),
-        _ => continue,
+        _ => vec![],
       };
       let possible_keyinputs =
         self.possible_modifiers_to_keyinputs(from_config, possible_modifiers)?;
@@ -112,7 +112,7 @@ impl<
       for (from_config, action) in remap.0.clone().into_iter() {
         let possible_modifiers = match action {
           config::values::Action::KeyInput { to: _, with } => with.unwrap_or_default(),
-          _ => continue,
+          _ => vec![],
         };
         let possible_keyinputs =
           self.possible_modifiers_to_keyinputs(from_config, possible_modifiers)?;

@@ -45,6 +45,7 @@ impl<
           self.event_source.grab_keys(self.watch_target_key_inputs());
         }
         Some(Event::KeyPressed { key_input }) => {
+          log::info!("{:?}", key_input);
           if let Some(action) = self
             .key_bind_for_focus
             .pressed(self.focus(), key_input.clone())
@@ -60,6 +61,7 @@ impl<
           }
         }
         Some(Event::KeyReleased { key_input }) => {
+          log::info!("{:?}", key_input);
           if let Some(action) = self
             .key_bind_for_focus
             .released(self.focus(), key_input.clone())
