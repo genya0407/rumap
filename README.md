@@ -36,11 +36,13 @@ Download binary from [Release](https://github.com/genya0407/rumap/releases) page
 ## Start keymapping
 
 ```shell
-# Write configuration
-$ vim ~/.rumap
 # rumap currently depends on Ruby version > 2.7.0
 $ ruby -v
 ruby 2.7.0p0 (2019-12-25 revision 647ee6f091) [x86_64-linux]
+
+# Write configuration
+$ vim ~/.rumap
+
 # launch rumap
 $ rumap --xremap-config ~/.rumap
 ```
