@@ -21,6 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - name: Install xorg dev package
+        run: "sudo apt-get update && sudo apt-get install xorg-dev"
+
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - name: Cache cargo registry
         uses: actions/cache@v1
