@@ -8,7 +8,7 @@ You can write keymap configurations with Ruby DSL:
 
 ```ruby
 # "global" keymaps
-remap 'C-BackSpace', to: 'Delete'
+remap 'Control-BackSpace', to: 'Delete'
 
 # execute command
 remap 'Alt-Shift-4', to: execute('gnome-screenshot -a -d 0')
@@ -21,11 +21,12 @@ window class_only: %w[chromium discord] do
   end
 end
 
+# vim-like arrow bindings
 # map `Control-h` to `Left`, and `Control-Shift-h` to `Shift-Left`, and so on.
-remap 'C-h', to: 'Left', with_modifier: 'Shift'
-remap 'C-j', to: 'Down', with_modifier: 'Shift'
-remap 'C-k', to: 'Up', with_modifier: 'Shift'
-remap 'C-l', to: 'Right', with_modifier: 'Shift'
+remap 'Control-h', to: 'Left', with_modifier: 'Shift'
+remap 'Control-j', to: 'Down', with_modifier: 'Shift'
+remap 'Control-k', to: 'Up', with_modifier: 'Shift'
+remap 'Control-l', to: 'Right', with_modifier: 'Shift'
 ```
 
 ## Installation
