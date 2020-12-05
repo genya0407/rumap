@@ -45,11 +45,8 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - uses: actions-rs/cargo@v1.0.1
-        with:
-          command: build
-          args: --release --target=${{ matrix.target }}
-          use-cross: true
+
+      - run: cargo build --release --all-features
 
       - run: |
           zip --junk-paths rumap-${{ matrix.target }} target/${{ matrix.target }}/release/rumap{,.exe}
