@@ -15,8 +15,8 @@ remap 'Alt-Shift-4', to: execute('gnome-screenshot -a -d 0')
 
 # application specific keymaps
 window class_only: %w[chromium discord] do
+  remap 'Alt_L', to: 'Control_L'
   %w[r z x c v w t f Return].each do |key|
-    remap 'Alt_L', to: 'Control_L'
     remap "Alt-#{key}", to: "C-#{key}"
   end
 end
