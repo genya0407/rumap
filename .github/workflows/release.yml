@@ -49,7 +49,8 @@ jobs:
       - run: cargo build --release --all-features
 
       - run: |
-          zip --junk-paths rumap-${{ matrix.target }} target/${{ matrix.target }}/release/rumap{,.exe}
+          zip --junk-paths rumap-${{ matrix.target }} target/release/rumap
+
       - uses: actions/upload-artifact@v1
         with:
           name: build-${{ matrix.target }}
