@@ -45,7 +45,7 @@ impl<
           self.event_source.grab_keys(self.watch_target_key_inputs());
         }
         Some(Event::KeyPressed { key_input }) => {
-          log::info!("{:?}", key_input);
+          log::info!("PRESS {:?}", key_input);
           if let Some(action) = self
             .key_bind_for_focus
             .pressed(self.focus(), key_input.clone())
@@ -56,12 +56,10 @@ impl<
               } => self.key_handler.press_key(bound_key_input),
               Action::Execution { execution } => self.shell_command_executor.execute(execution),
             }
-          } else {
-            self.key_handler.press_key(key_input)
           }
         }
         Some(Event::KeyReleased { key_input }) => {
-          log::info!("{:?}", key_input);
+          log::info!("RELEASE {:?}", key_input);
           if let Some(action) = self
             .key_bind_for_focus
             .released(self.focus(), key_input.clone())
@@ -72,8 +70,6 @@ impl<
               } => self.key_handler.release_key(bound_key_input),
               Action::Execution { execution } => self.shell_command_executor.execute(execution),
             }
-          } else {
-            self.key_handler.release_key(key_input)
           }
         }
         None => return,

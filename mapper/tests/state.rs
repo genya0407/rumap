@@ -82,48 +82,6 @@ speculate! {
         }
       }
 
-      context "when KeyPressed event occured, and keybind does not exist" {
-        before {
-          use mapper::*;
-          use mapper::mock::*;
-
-          let executor = MockShellCommandExecutor::new();
-          let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = MockKeyHandler::new();
-
-          let from = KeyInput::of(String::from("a"), vec![String::from("Alt")]);
-          let to = KeyInput::of(String::from("b"), vec![String::from("Control")]);
-
-          let keybind_for_focus = MockKeyBindForFocus::new(
-            maplit::btreemap!{
-              (Focus::NoFocus, from.clone()) => Action::Key { key_input: to.clone() }
-            },
-            maplit::btreemap!{},
-          );
-          let another_key = KeyInput::of(String::from("c"), vec![String::from("Shift")]);
-          let event_source = MockEventSource::new(vec![
-            Event::KeyPressed { key_input: another_key.clone() }
-          ]);
-
-          let mut state = State::new(
-            keybind_for_focus.clone(),
-            possible_keyinput_finder,
-            event_source.clone(),
-            key_handler.clone(),
-            executor.clone()
-          );
-        }
-
-        it "bare key is pressed" {
-          state.run();
-          assert_eq!(
-            key_handler.pressed_keys.lock().unwrap()[0].clone(),
-            another_key
-          );
-        }
-      }
-
-
       context "when KeyReleased event occured, and keybind exists" {
         before {
           use mapper::*;
@@ -160,47 +118,6 @@ speculate! {
           assert_eq!(
             key_handler.released_keys.lock().unwrap()[0].clone(),
             to
-          );
-        }
-      }
-
-      context "when KeyReleased event occured, and keybind does not exist" {
-        before {
-          use mapper::*;
-          use mapper::mock::*;
-
-          let executor = MockShellCommandExecutor::new();
-          let possible_keyinput_finder = mapper::PossibleKeyinputFinder::new(maplit::btreemap!{});
-          let key_handler = MockKeyHandler::new();
-
-          let from = KeyInput::of(String::from("a"), vec![String::from("Alt")]);
-          let to = KeyInput::of(String::from("b"), vec![String::from("Control")]);
-
-          let keybind_for_focus = MockKeyBindForFocus::new(
-            maplit::btreemap!{},
-            maplit::btreemap!{
-              (Focus::NoFocus, from.clone()) => Action::Key { key_input: to.clone() }
-            },
-          );
-          let another_key = KeyInput::of(String::from("c"), vec![String::from("Shift")]);
-          let event_source = MockEventSource::new(vec![
-            Event::KeyReleased { key_input: another_key.clone() }
-          ]);
-
-          let mut state = State::new(
-            keybind_for_focus.clone(),
-            possible_keyinput_finder,
-            event_source.clone(),
-            key_handler.clone(),
-            executor.clone()
-          );
-        }
-
-        it "bare key is released" {
-          state.run();
-          assert_eq!(
-            key_handler.released_keys.lock().unwrap()[0].clone(),
-            another_key
           );
         }
       }
